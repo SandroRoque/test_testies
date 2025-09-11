@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISREG AIH Client</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 SISREG AIH Client</h1>
+        <div id="status" class="status disconnected">
+            <span class="status-indicator"></span>
+            <span class="status-text">Verificando...</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="not-connected" class="section hidden">
+            <div class="warning">
+                <p>⚠️ Extensão não ativa</p>
+                <p class="small">Navegue para <strong>sisregiii.saude.gov.br</strong> para usar esta extensão.</p>
+            </div>
+        </div>
+
+        <div id="connected" class="section hidden">
+            <div class="function-group">
+                <h3>📋 Consultas Individuais</h3>
+                <div class="input-group">
+                    <label for="codSolicitacao">Código da Solicitação:</label>
+                    <input type="text" id="codSolicitacao" placeholder="Ex: 123456">
+                    <button id="getAihDetalhe" class="btn primary">Obter Detalhes AIH</button>
+                </div>
+                <button id="pegaNumeroAih" class="btn secondary">Obter Número AIH</button>
+            </div>
+
+            <div class="function-group">
+                <h3>🏥 Gestão de Internações</h3>
+                <div class="input-row">
+                    <div class="input-group flex-1">
+                        <label>Data de Internação:</label>
+                        <input type="date" id="dtInternacao">
+                    </div>
+                    <div class="input-group flex-1">
+                        <label>CPF Médico:</label>
+                        <input type="text" id="medicoInternacao" placeholder="CPF">
+                    </div>
+                </div>
+                <button id="enviarInternacao" class="btn primary">Enviar Internação</button>
+                <button id="internarAltaExtrairAIH" class="btn primary">Internar + Alta + AIH</button>
+            </div>
+
+            <div class="function-group">
+                <h3>📤 Gestão de Altas</h3>
+                <div class="input-group">
+                    <label for="motivoAlta">Motivo da Alta:</label>
+                    <select id="motivoAlta">
+                        <option value="38">Alta Habitual (38)</option>
+                        <option value="42">Evasão (42)</option>
+                        <option value="53">Transferência Externa (53)</option>
+                    </select>
+                </div>
+                <button id="enviarAlta" class="btn warning">Enviar Alta</button>
+                <button id="pegaNumeroAihAltaCondicional" class="btn secondary">Obter AIH + Alta Condicional</button>
+            </div>
+
+            <div class="function-group">
+                <h3>📊 Exportações em Massa</h3>
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Aguardando...</div>
+                </div>
+                <button id="crawlHospitalizations" class="btn success">Exportar Hospitalizações</button>
+                <button id="crawlAuthorizations" class="btn success">Exportar Autorizações</button>
+                <button id="crawlSisreg" class="btn success">Exportar Tudo (SISREG)</button>
+            </div>
+
+            <div class="function-group">
+                <h3>🔧 Configurações</h3>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="enableLogging" checked>
+                        Habilitar logs no console
+                    </label>
+                </div>
+                <div class="input-group">
+                    <label for="concurrency">Concorrência (1-10):</label>
+                    <input type="number" id="concurrency" min="1" max="10" value="6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="version">v1.0.0</div>
+        <div class="links">
+            <a href="#" id="openHelp">Ajuda</a>
+            <a href="#" id="openOptions">Opções</a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
