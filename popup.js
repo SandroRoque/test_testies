@@ -25,27 +25,72 @@ class SisregPopup {
     async checkConnection() {
         if (!this.currentTab) return;
 
-        try {
-            const response = await chrome.tabs.sendMessage(this.currentTab.id, {
-                action: 'checkSisregStatus'
-            });
-
-            this.isConnected = response && response.loaded;
-            this.updateConnectionStatus();
-        } catch (error) {
-            console.error('Failed to check connection:', error);
+        // Check if we're on the correct domain first
+        if (!this.currentTab.url || !this.currentTab.url.includes('sisregiii.saude.gov.br')) {
             this.isConnected = false;
             this.updateConnectionStatus();
+            return;
         }
+
+        // Update status to show checking
+        this.updateConnectionStatus('checking');
+
+        // Retry logic for checking SISREG status (may need time to load)
+        const maxRetries = 3;
+        let retryDelay = 500; // Start with 500ms delay
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+                    action: 'checkSisregStatus'
+                });
+
+                if (response && response.loaded) {
+                    this.isConnected = true;
+                    this.updateConnectionStatus();
+                    return;
+                }
+
+                // If not loaded yet and we have more attempts, wait and retry
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    retryDelay *= 1.5; // Increase delay for next attempt
+                }
+            } catch (error) {
+                console.error(`Connection check attempt ${attempt} failed:`, error);
+                
+                // If it's the last attempt, fail
+                if (attempt === maxRetries) {
+                    this.isConnected = false;
+                    this.updateConnectionStatus();
+                    return;
+                }
+
+                // Wait before retrying
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    retryDelay *= 1.5;
+                }
+            }
+        }
+
+        // If we get here, all attempts failed
+        this.isConnected = false;
+        this.updateConnectionStatus();
     }
 
-    updateConnectionStatus() {
+    updateConnectionStatus(state) {
         const statusEl = document.getElementById('status');
         const statusText = statusEl.querySelector('.status-text');
         const connectedSection = document.getElementById('connected');
         const notConnectedSection = document.getElementById('not-connected');
 
-        if (this.isConnected) {
+        if (state === 'checking') {
+            statusEl.className = 'status checking';
+            statusText.textContent = 'Verificando conexão...';
+            connectedSection.classList.add('hidden');
+            notConnectedSection.classList.add('hidden');
+        } else if (this.isConnected) {
             statusEl.className = 'status connected';
             statusText.textContent = 'Conectado ao SISREG';
             connectedSection.classList.remove('hidden');
@@ -180,6 +225,27 @@ class SisregPopup {
         document.getElementById('openOptions').addEventListener('click', (e) => {
             e.preventDefault();
             chrome.runtime.openOptionsPage();
+        });
+
+        // Add refresh connection button handler
+        document.getElementById('refreshConnection').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const refreshBtn = e.target;
+            
+            // Visual feedback
+            refreshBtn.style.opacity = '0.5';
+            refreshBtn.disabled = true;
+            
+            try {
+                await this.getCurrentTab();
+                await this.checkConnection();
+            } finally {
+                // Restore button state
+                setTimeout(() => {
+                    refreshBtn.style.opacity = '';
+                    refreshBtn.disabled = false;
+                }, 500);
+            }
         });
     }
 
