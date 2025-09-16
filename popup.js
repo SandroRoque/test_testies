@@ -25,18 +25,55 @@ class SisregPopup {
     async checkConnection() {
         if (!this.currentTab) return;
 
-        try {
-            const response = await chrome.tabs.sendMessage(this.currentTab.id, {
-                action: 'checkSisregStatus'
-            });
-
-            this.isConnected = response && response.loaded;
-            this.updateConnectionStatus();
-        } catch (error) {
-            console.error('Failed to check connection:', error);
+        // Check if we're on the correct domain first
+        if (!this.currentTab.url || !this.currentTab.url.includes('sisregiii.saude.gov.br')) {
             this.isConnected = false;
             this.updateConnectionStatus();
+            return;
         }
+
+        // Retry logic for checking SISREG status (may need time to load)
+        const maxRetries = 3;
+        let retryDelay = 500; // Start with 500ms delay
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+                    action: 'checkSisregStatus'
+                });
+
+                if (response && response.loaded) {
+                    this.isConnected = true;
+                    this.updateConnectionStatus();
+                    return;
+                }
+
+                // If not loaded yet and we have more attempts, wait and retry
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    retryDelay *= 1.5; // Increase delay for next attempt
+                }
+            } catch (error) {
+                console.error(`Connection check attempt ${attempt} failed:`, error);
+                
+                // If it's the last attempt, fail
+                if (attempt === maxRetries) {
+                    this.isConnected = false;
+                    this.updateConnectionStatus();
+                    return;
+                }
+
+                // Wait before retrying
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    retryDelay *= 1.5;
+                }
+            }
+        }
+
+        // If we get here, all attempts failed
+        this.isConnected = false;
+        this.updateConnectionStatus();
     }
 
     updateConnectionStatus() {
@@ -180,6 +217,12 @@ class SisregPopup {
         document.getElementById('openOptions').addEventListener('click', (e) => {
             e.preventDefault();
             chrome.runtime.openOptionsPage();
+        });
+
+        // Add refresh connection button handler
+        document.getElementById('refreshConnection').addEventListener('click', async () => {
+            await this.getCurrentTab();
+            await this.checkConnection();
         });
     }
 

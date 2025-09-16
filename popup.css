@@ -37,6 +37,26 @@ body {
     opacity: 0.9;
 }
 
+.btn-refresh {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    margin-left: 8px;
+}
+
+.btn-refresh:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-refresh:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .status-indicator {
     width: 8px;
     height: 8px;

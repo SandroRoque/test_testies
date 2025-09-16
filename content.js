@@ -13,13 +13,29 @@
 
   // Inject the main SISREG client script
   function injectSisregClient() {
-    const script = document.createElement('script');
-    script.src = chrome.runtime.getURL('sisreg-client.js');
-    script.onload = function() {
-      this.remove();
-      console.log('SISREG Client injected successfully');
-    };
-    (document.head || document.documentElement).appendChild(script);
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = chrome.runtime.getURL('sisreg-client.js');
+      script.onload = function() {
+        this.remove();
+        console.log('SISREG Client script injected successfully');
+        
+        // Wait a bit more for the SISREG object to be fully initialized
+        setTimeout(() => {
+          if (typeof window.SISREG !== 'undefined') {
+            console.log('SISREG object is now available');
+          } else {
+            console.warn('SISREG object not found after injection');
+          }
+          resolve();
+        }, 100);
+      };
+      script.onerror = function() {
+        console.error('Failed to inject SISREG Client script');
+        resolve();
+      };
+      (document.head || document.documentElement).appendChild(script);
+    });
   }
 
   // Add visual indicator that extension is active
@@ -66,11 +82,25 @@
   // Listen for messages from the popup and options
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'checkSisregStatus') {
-      sendResponse({
-        loaded: typeof window.SISREG !== 'undefined',
-        url: window.location.href,
-        domain: window.location.hostname
-      });
+      // Give SISREG a moment to load if it's not ready yet
+      const checkSisregReady = () => {
+        const isLoaded = typeof window.SISREG !== 'undefined' && window.SISREG.api;
+        sendResponse({
+          loaded: isLoaded,
+          url: window.location.href,
+          domain: window.location.hostname
+        });
+      };
+
+      // Check immediately
+      if (typeof window.SISREG !== 'undefined' && window.SISREG.api) {
+        checkSisregReady();
+      } else {
+        // Wait a bit for SISREG to load, then check again
+        setTimeout(checkSisregReady, 100);
+      }
+      
+      return true; // Keep message channel open for async response
     }
     
     if (request.action === 'updateSisregConfig') {
@@ -126,13 +156,14 @@
 
   // Wait for DOM to be ready, then inject
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      injectSisregClient();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await injectSisregClient();
       addExtensionIndicator();
     });
   } else {
-    injectSisregClient();
-    addExtensionIndicator();
+    injectSisregClient().then(() => {
+      addExtensionIndicator();
+    });
   }
 
 })();
