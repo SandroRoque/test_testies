@@ -73,6 +73,11 @@ body {
     background: #f44336;
 }
 
+.status.checking .status-indicator {
+    background: #ff9800;
+    animation: pulse 1s infinite;
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }

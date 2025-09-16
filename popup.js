@@ -32,6 +32,9 @@ class SisregPopup {
             return;
         }
 
+        // Update status to show checking
+        this.updateConnectionStatus('checking');
+
         // Retry logic for checking SISREG status (may need time to load)
         const maxRetries = 3;
         let retryDelay = 500; // Start with 500ms delay
@@ -76,13 +79,18 @@ class SisregPopup {
         this.updateConnectionStatus();
     }
 
-    updateConnectionStatus() {
+    updateConnectionStatus(state) {
         const statusEl = document.getElementById('status');
         const statusText = statusEl.querySelector('.status-text');
         const connectedSection = document.getElementById('connected');
         const notConnectedSection = document.getElementById('not-connected');
 
-        if (this.isConnected) {
+        if (state === 'checking') {
+            statusEl.className = 'status checking';
+            statusText.textContent = 'Verificando conexão...';
+            connectedSection.classList.add('hidden');
+            notConnectedSection.classList.add('hidden');
+        } else if (this.isConnected) {
             statusEl.className = 'status connected';
             statusText.textContent = 'Conectado ao SISREG';
             connectedSection.classList.remove('hidden');
@@ -220,9 +228,24 @@ class SisregPopup {
         });
 
         // Add refresh connection button handler
-        document.getElementById('refreshConnection').addEventListener('click', async () => {
-            await this.getCurrentTab();
-            await this.checkConnection();
+        document.getElementById('refreshConnection').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const refreshBtn = e.target;
+            
+            // Visual feedback
+            refreshBtn.style.opacity = '0.5';
+            refreshBtn.disabled = true;
+            
+            try {
+                await this.getCurrentTab();
+                await this.checkConnection();
+            } finally {
+                // Restore button state
+                setTimeout(() => {
+                    refreshBtn.style.opacity = '';
+                    refreshBtn.disabled = false;
+                }, 500);
+            }
         });
     }
 

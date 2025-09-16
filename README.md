@@ -129,11 +129,17 @@ A extensão solicita as seguintes permissões:
 
 ## 🐛 Solução de Problemas
 
-### Extensão não ativa
-- ✅ Verifique se está em `sisregiii.saude.gov.br`
-- ✅ Faça login no sistema
-- ✅ Recarregue a página
-- ✅ Reinstale a extensão se necessário
+### Extensão não ativa / "Não conectado"
+Este é um problema comum que ocorre quando a extensão não consegue detectar que o SISREG está carregado. **Soluções:**
+
+- ✅ **Aguarde alguns segundos** após carregar a página - o SISREG pode demorar para inicializar
+- ✅ **Clique no botão de atualização (🔄)** no popup da extensão para verificar novamente
+- ✅ **Recarregue a página** (`F5` ou `Ctrl+R`) e aguarde a mensagem "SISREG Extension Ativa" aparecer
+- ✅ **Verifique se está em** `sisregiii.saude.gov.br` (URL correta)
+- ✅ **Faça login no sistema** se não estiver logado
+- ✅ **Reinstale a extensão** se o problema persistir
+
+**Nota**: A extensão agora possui um sistema de retry automático que tenta detectar o SISREG 3 vezes com intervalos crescentes antes de reportar "não conectado".
 
 ### Operações falhando
 - ✅ Reduza a concorrência para 2-4
